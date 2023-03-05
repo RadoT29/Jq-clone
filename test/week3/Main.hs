@@ -114,13 +114,13 @@ prop_object_not_equals_array  xs ys = jsonObjectSC xs /= jsonArraySC ys
 
 prop_show_null               = show jsonNullSC == "null"
 prop_show_number n           = show (jsonNumberSC n) == show n
-prop_show_string s           = show (jsonStringSC s) == '\"' : s ++ "\""
+prop_show_string s           = show (jsonStringSC s) === '\"' : s ++ "\""
 prop_show_bool_true          = show (jsonBoolSC True) == "true"
 prop_show_bool_false         = show (jsonBoolSC False) == "false"
 prop_show_empty_array        = show (jsonArraySC []) == "[]"
 prop_show_array_one_element  = show (jsonArraySC [jsonNullSC]) == "[\n  null\n]"
-prop_show_empty_object       = show (jsonObjectSC []) == "{}"
-prop_show_object_one_element = show (jsonObjectSC [("key", jsonNullSC)]) == "{\n  \"key\": null\n}"
+prop_show_empty_object       = show (jsonObjectSC []) === "{}"
+prop_show_object_one_element = show (jsonObjectSC [("key", jsonNullSC)]) === "{\n  \"key\": null\n}"
 
 tests = testGroup "Week 3 tests" [
     testGroup "Constructors are defined" [

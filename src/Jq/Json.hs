@@ -1,14 +1,25 @@
 module Jq.Json where
 
-data JSON =
-    JNull
+data JSON = JString { str :: String} | JNumber {num :: Double} | JBool {bool :: Bool} |
+  JNull | JObject {pairs :: [(String, JSON)]} | JArray {values :: [JSON]}
 
 instance Show JSON where
-  show (JNull) = "null"
+  show JNull = "null"
+  show (JString s) = "\"" ++s ++ "\""
+  show (JNumber n) = show (truncate n)
+  show (JBool b) = if b then "true" else "false"
+  show (JObject p) = if null p then "{}" else "{\n  " ++ foldr (\(a,b) acc -> show a ++ ": " ++ show b ++ if acc == "" then acc else ", " ++ acc) "" p ++ "\n}"
+  show (JArray arr) = if null arr then "[]" else "[\n  " ++ foldr (\a b-> show a ++ if b=="" then b else ", " ++ b) "" arr ++ "\n]"
+
 
 instance Eq JSON where
   JNull == JNull = True
-  _ == _ = undefined
+  (JString v) == (JString w) = v == w
+  (JNumber v) == (JNumber w) = v == w
+  (JBool v) == (JBool w) = v == w
+  (JObject v) == (JObject w) = v == w
+  (JArray v) == (JArray w) = v == w
+  _ == _ = False
 
 -- Smart constructors
 -- These are included for test purposes and
@@ -20,16 +31,16 @@ jsonNullSC :: JSON
 jsonNullSC = JNull
 
 jsonNumberSC :: Int -> JSON
-jsonNumberSC = undefined
+jsonNumberSC n = JNumber (fromIntegral n)
 
 jsonStringSC :: String -> JSON
-jsonStringSC = undefined
+jsonStringSC = JString
 
 jsonBoolSC :: Bool -> JSON
-jsonBoolSC = undefined
+jsonBoolSC = JBool
 
 jsonArraySC :: [JSON] -> JSON
-jsonArraySC = undefined
+jsonArraySC = JArray
 
 jsonObjectSC :: [(String, JSON)] -> JSON
-jsonObjectSC = undefined
+jsonObjectSC = JObject
