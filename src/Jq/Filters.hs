@@ -1,13 +1,27 @@
 module Jq.Filters where
 
-data Filter = Identity
+data Filter = Identity | Parenthesis Filter | ObjectIndex String
+ | ArrayIndex Int | Slice Int Int 
+ | Iterator [Int] | Optional Filter
+ | Pipe Filter Filter | Comma Filter Filter
+ 
 
 instance Show Filter where
-  show (Identity) = "."
+  show Identity = "."
+  show (ObjectIndex str) = str
+  show (Pipe a b) = show a ++ " | " ++ show b
+  show (Comma a b) = show a ++ ", " ++ show b
 
 instance Eq Filter where
   Identity == Identity = True
-  _ == _ = undefined
+  (ObjectIndex a) == (ObjectIndex b) = a == b
+  (Pipe a b) == (Pipe x y) = a == x && b == y
+  (Comma a b) == (Comma x y) = a == x && b == y
+  (Parenthesis f) == (Parenthesis v) = f == v
+  (ArrayIndex i) == (ArrayIndex j) = i == j
+  (Slice a b) == (Slice c d) = a == c && b == d 
+  (Iterator xs) == (Iterator ys) = xs == ys
+  _ == _ = False
 
 data Config = ConfigC {filters :: Filter}
 
@@ -21,10 +35,10 @@ filterIdentitySC :: Filter
 filterIdentitySC = Identity
 
 filterStringIndexingSC :: String -> Filter
-filterStringIndexingSC = undefined
+filterStringIndexingSC = ObjectIndex
 
 filterPipeSC :: Filter -> Filter -> Filter
-filterPipeSC = undefined
+filterPipeSC = Pipe
 
 filterCommaSC :: Filter -> Filter -> Filter
-filterCommaSC = undefined
+filterCommaSC = Comma
