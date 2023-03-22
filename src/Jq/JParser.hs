@@ -2,6 +2,7 @@ module Jq.JParser where
 
 import Parsing.Parsing
 import Jq.Json
+import Data.Char ( chr )
 
 parseJNull :: Parser JSON
 parseJNull = do _ <- string "null"
@@ -43,24 +44,62 @@ parseStr = do
     _ <- char '"'
     return s
 
+escapeUnicode :: Parser Char
+escapeUnicode = parseUni >>= return . chr . read
+
+-- >>> parse parseStr "\"\\u1234\""
+-- [("\4660","")]
+
 parseEscape :: Parser Char
-parseEscape = 
-    -- <|> How do we parse hex ??? "\u1234"
-    fmap (const '\\') (string "\\\\") 
+parseEscape =
+    fmap (const '\\') (string "\\\\")
     <|> fmap (const '\"') (string "\\\"")
     <|> fmap (const '/') (string "\\/")
     <|> fmap (const '\b') (string "\\b")
     <|> fmap (const '\f') (string "\\f")
     <|> fmap (const '\n') (string "\\n")
-    <|> fmap (const '\r') (string "\\r")  
+    <|> fmap (const '\r') (string "\\r")
     <|> fmap (const '\t') (string "\\t")
-    <|> fmap (const '\b') (string "\\u")
+    <|> escapeUnicode
+
+parseUni :: Parser String
+parseUni = do
+    _ <- string "\\u"
+    a <- digit <|> sat (`elem` "abcdefABCDEF")
+    b <- digit <|> sat (`elem` "abcdefABCDEF")
+    c <- digit <|> sat (`elem` "abcdefABCDEF")
+    d <- digit <|> sat (`elem` "abcdefABCDEF")
+    return (show (parseHex [a,b,c,d]))
+
+parseHex :: String -> Integer
+parseHex [] = 0
+parseHex hxStr = convertHex (last hxStr)+(16*parseHex (init hxStr))
+
+convertHex :: Char -> Integer
+convertHex hex
+    | hex == '0' = 0
+    | hex == '1' = 1
+    | hex == '2' = 2
+    | hex == '3' = 3
+    | hex == '4' = 4
+    | hex == '5' = 5
+    | hex == '6' = 6
+    | hex == '7' = 7
+    | hex == '8' = 8
+    | hex == '9' = 9
+    | hex == 'A' || hex == 'a' = 10
+    | hex == 'B' || hex == 'b' = 11
+    | hex == 'C' || hex == 'c' = 12
+    | hex == 'D' || hex == 'd' = 13
+    | hex == 'E' || hex == 'e' = 14
+    | hex == 'F' || hex == 'f' = 15
+    | otherwise     = 0
 
 parseArray :: Parser JSON
-parseArray = do 
+parseArray = do
     _ <- symbol "["
     x <- many parseJSON
-    xs <- many (do 
+    xs <- many (do
         _ <- symbol ","
         parseJSON)
     _ <- symbol "]"
