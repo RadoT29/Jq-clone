@@ -6,7 +6,7 @@ data JSON = JString { str :: String} | JNumber {num :: Double} | JBool {bool :: 
 instance Show JSON where
   show JNull = "null"
   show (JString s) = "\"" ++s ++ "\""
-  show (JNumber n) = show (truncate n)
+  show (JNumber n) = if n == fromInteger (round n) then show (round n :: Integer) else show n
   show (JBool b) = if b then "true" else "false"
   show (JObject p) = if null p then "{}" else "{\n  " ++ foldr (\(a,b) acc -> show a ++ ": " ++ show b ++ if acc == "" then acc else ", " ++ acc) "" p ++ "\n}"
   show (JArray arr) = if null arr then "[]" else "[\n  " ++ foldr (\a b-> show a ++ if b=="" then b else ", " ++ b) "" arr ++ "\n]"
