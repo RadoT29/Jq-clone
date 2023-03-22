@@ -40,7 +40,7 @@ parseString = JString <$> parseStr
 parseStr :: Parser String
 parseStr = do
     _ <- char '"'
-    s <- some  (parseEscape <|> sat (\x -> x /= '\\' && x /= '"'))
+    s <- some  (sat (\x -> x /= '\\' && x /= '"')  <|> parseEscape)
     _ <- char '"'
     return s
 
@@ -125,6 +125,5 @@ parsePair = do
 parseJSON :: Parser JSON
 parseJSON = token $ parseJNull <|> parseBool <|> parseNum <|> parseString <|> parseArray <|> parseObject
 
--- >>> parse parseObject "{"asd": 5}"
--- Variable not in scope: asd
--- Perhaps you meant `and' (imported from Prelude)
+-- >>> parse parseObject `{"foo": "42", "bar": "43"}`
+-- parse error on input `{'
