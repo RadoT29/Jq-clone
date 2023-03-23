@@ -40,32 +40,41 @@ parseString = JString <$> parseStr
 parseStr :: Parser String
 parseStr = do
     _ <- char '"'
-    s <- some  (sat (\x -> x /= '\\' && x /= '"')  <|> parseEscape)
-    _ <- char '"'
-    return s
+    actualString
+
+actualString :: Parser String
+actualString = do
+    s <- item
+    if s == '"' then do return ""
+    else if s == '\\' then do
+        e <- parseEscape
+        xs <- actualString
+        return $ s : e : xs
+    else do
+        xs <- actualString
+        return $ s : xs
 
 escapeUnicode :: Parser Char
 escapeUnicode = parseUni >>= return . chr . read
 
--- >>> parse parseNum "0.21033"
--- [(0.21033,"")]
+-- >>> parse parseStr "\"\\u1234\""
+-- [("\\\4660","")]
 
 parseEscape :: Parser Char
-parseEscape =
-    -- fmap (const '\\') (string "\\\\")
-    -- <|> fmap (const '\"') (string "\\\"")
-    -- <|> fmap (const '/') (string "\\/")
-    -- <|> fmap (const '\b') (string "\\b")
-    -- <|> fmap (const '\f') (string "\\f")
-    -- <|> fmap (const '\n') (string "\\n")
-    -- <|> fmap (const '\r') (string "\\r")
-    -- <|> fmap (const '\t') (string "\\t")
-    -- <|> 
-    escapeUnicode
+parseEscape = do
+    fmap (const '\\') (char '\\')
+    <|> fmap (const '\"') (char '\"')
+    <|> fmap (const '/') (char '/')
+    <|> fmap (const 'b') (char 'b')
+    <|> fmap (const 'f') (char 'f')
+    <|> fmap (const 'n') (char 'n')
+    <|> fmap (const 'r') (char 'r')
+    <|> fmap (const 't') (char 't')
+    <|> escapeUnicode
 
 parseUni :: Parser String
 parseUni = do
-    _ <- string "\\u"
+    _ <- char 'u'
     a <- digit <|> sat (`elem` "abcdefABCDEF")
     b <- digit <|> sat (`elem` "abcdefABCDEF")
     c <- digit <|> sat (`elem` "abcdefABCDEF")
