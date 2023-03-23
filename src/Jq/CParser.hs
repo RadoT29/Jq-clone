@@ -18,6 +18,12 @@ parseComma = return Identity
 parseFilter :: Parser Filter
 parseFilter = parseIdentity
 
+parseParenthesis :: Parser Filter
+parseParenthesis = do
+  _ <- char '('
+  f <- parseFilter
+  _ <- char ')'
+  return f
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of
   [] -> Left "No filters provided"

@@ -117,24 +117,41 @@ convertHex hex
 
 
 parseArray :: Parser JSON
-parseArray = do
+parseArray = emptyArr <|> filledArr
+
+emptyArr :: Parser JSON
+emptyArr = do
     _ <- symbol "["
-    x <- many parseJSON
+    _ <- symbol "]"
+    return (JArray [])
+filledArr :: Parser JSON
+filledArr = do
+    _ <- symbol "["
+    x <- parseJSON
     xs <- many (do
         _ <- symbol ","
         parseJSON)
     _ <- symbol "]"
-    return (JArray (x++xs))
+    return (JArray (x:xs))
 
 parseObject :: Parser JSON
-parseObject = do
+parseObject = emptyObj <|> filledObj
+
+emptyObj :: Parser JSON
+emptyObj = do
     _ <- symbol "{"
-    x <- many parsePair
+    _ <- symbol "}"
+    return (JObject [])
+
+filledObj :: Parser JSON
+filledObj =  do
+    _ <- symbol "{"
+    x <- parsePair
     xs <- many (do
         _ <- symbol ","
         parsePair)
     _ <- symbol "}"
-    return (JObject (x ++ xs))
+    return (JObject (x : xs))
 
 parsePair :: Parser (String, JSON)
 parsePair = do
