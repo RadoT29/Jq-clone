@@ -114,6 +114,7 @@ emptyArr = do
     _ <- symbol "["
     _ <- symbol "]"
     return (JArray [])
+
 filledArr :: Parser JSON
 filledArr = do
     _ <- symbol "["
@@ -155,12 +156,14 @@ filledObj =  do
 parsePair :: Parser (String, JSON)
 parsePair = do
     s <- parseStr
-    _ <- char ':'
+    _ <- symbol ":"
     json <- parseJSON
     return (s, json)
 
 parseJSON :: Parser JSON
 parseJSON = token $ parseJNull <|> parseBool <|> parseNum <|> parseString <|> parseArray <|> parseObject
 
--- >>> parse parseObject `{"foo": "42", "bar": "43"}`
--- parse error on input `{'
+-- >>> parse parseObject "{\"foo\": 42}"
+-- [({
+--   "foo": 42
+-- },"")]
