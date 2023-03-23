@@ -44,12 +44,18 @@ parseStr = do
 
 actualString :: Parser String
 actualString = do
-    s <- item
+    s <- item <|> escapeUnicode
     if s == '"' then do return ""
     else if s == '\\' then do
-        e <- parseEscape
-        xs <- actualString
-        return $ s : e : xs
+        e <- parseEscape <|> char 'u'
+        if e == 'u' then do
+            hex <- escapeUnicode
+            xs <- actualString
+            return $ hex :xs
+        else 
+            do
+            xs <- actualString
+            return $ s : e : xs
     else do
         xs <- actualString
         return $ s : xs
@@ -57,8 +63,8 @@ actualString = do
 escapeUnicode :: Parser Char
 escapeUnicode = parseUni >>= return . chr . read
 
--- >>> parse parseStr "\"\\u1234\""
--- [("\\\4660","")]
+-- >>> parse parseStr "\"asd \\u1234\""
+-- [("asd \4660","")]
 
 parseEscape :: Parser Char
 parseEscape = do
@@ -70,11 +76,10 @@ parseEscape = do
     <|> fmap (const 'n') (char 'n')
     <|> fmap (const 'r') (char 'r')
     <|> fmap (const 't') (char 't')
-    <|> escapeUnicode
-
+    
 parseUni :: Parser String
 parseUni = do
-    _ <- char 'u'
+    -- _ <- string "\\u"
     a <- digit <|> sat (`elem` "abcdefABCDEF")
     b <- digit <|> sat (`elem` "abcdefABCDEF")
     c <- digit <|> sat (`elem` "abcdefABCDEF")
