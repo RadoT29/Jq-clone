@@ -2,7 +2,7 @@ module Jq.JParser where
 
 import Parsing.Parsing
 import Jq.Json
-import Data.Char ( chr )
+import Data.Char ( chr, readLitChar, isHexDigit )
 
 parseJNull :: Parser JSON
 parseJNull = do _ <- string "null"
@@ -28,10 +28,10 @@ parseFloat =  do
 
 parseScientific :: Parser JSON
 parseScientific = do
-    n <- parseFloat
+    n <- parseFloat <|> fromIntegral <$> int
     _ <- char 'e' <|> char 'E'
     sign <- symbol "+" <|> symbol "-" <|> symbol ""
-    mag <- int
+    mag <- nat
     if sign == "-" then return (JNumber (n / 10 ^ mag))  else return (JNumber (n * 10 ^ mag))
 
 parseString :: Parser JSON
@@ -47,8 +47,8 @@ parseStr = do
 escapeUnicode :: Parser Char
 escapeUnicode = parseUni >>= return . chr . read
 
--- >>> parse parseStr "\"\\u1234\""
--- [("\4660","")]
+-- >>> parse parseNum "1E--5"
+-- [(1,"E--5")]
 
 parseEscape :: Parser Char
 parseEscape =
@@ -94,6 +94,12 @@ convertHex hex
     | hex == 'E' || hex == 'e' = 14
     | hex == 'F' || hex == 'f' = 15
     | otherwise     = 0
+
+-- hexDigit = sat isHexDigit
+-- parseUnicode = do
+--     _ <- symbol "\\u"
+--     a <- hexdi
+
 
 parseArray :: Parser JSON
 parseArray = do

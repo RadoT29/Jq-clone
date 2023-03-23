@@ -8,6 +8,13 @@ parseIdentity = do
   _ <- token . char $ '.'
   return Identity
 
+
+parsePipe :: Parser Filter
+parsePipe = return Identity
+
+parseComma :: Parser Filter
+parseComma = return Identity
+
 parseFilter :: Parser Filter
 parseFilter = parseIdentity
 
