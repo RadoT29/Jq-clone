@@ -63,9 +63,6 @@ actualString = do
 escapeUnicode :: Parser Char
 escapeUnicode = parseUni >>= return . chr . read
 
--- >>> parse parseStr "\"asd \\u1234\""
--- [("asd \4660","")]
-
 parseEscape :: Parser Char
 parseEscape = do
     fmap (const '\\') (char '\\')
@@ -79,7 +76,6 @@ parseEscape = do
     
 parseUni :: Parser String
 parseUni = do
-    -- _ <- string "\\u"
     a <- digit <|> sat (`elem` "abcdefABCDEF")
     b <- digit <|> sat (`elem` "abcdefABCDEF")
     c <- digit <|> sat (`elem` "abcdefABCDEF")
@@ -110,12 +106,6 @@ convertHex hex
     | hex == 'F' || hex == 'f' = 15
     | otherwise     = 0
 
--- hexDigit = sat isHexDigit
--- parseUnicode = do
---     _ <- symbol "\\u"
---     a <- hexdi
-
-
 parseArray :: Parser JSON
 parseArray = emptyArr <|> filledArr
 
@@ -133,6 +123,15 @@ filledArr = do
         parseJSON)
     _ <- symbol "]"
     return (JArray (x:xs))
+
+
+-- >>> parse parseJSON "[1,2,5,  6  , \"asd\",[1,2,3]]"
+-- [([
+--   1, 2, 5, 6, "asd", [
+--   1, 2, 3
+-- ]
+-- ],"")]
+
 
 parseObject :: Parser JSON
 parseObject = emptyObj <|> filledObj
@@ -157,7 +156,7 @@ parsePair :: Parser (String, JSON)
 parsePair = do
     s <- parseStr
     _ <- char ':'
-    json <- parseNum
+    json <- parseJSON
     return (s, json)
 
 parseJSON :: Parser JSON
