@@ -47,20 +47,21 @@ parseStr = do
 escapeUnicode :: Parser Char
 escapeUnicode = parseUni >>= return . chr . read
 
--- >>> parse parseNum "1E--5"
--- [(1,"E--5")]
+-- >>> parse parseNum "0.21033"
+-- [(0.21033,"")]
 
 parseEscape :: Parser Char
 parseEscape =
-    fmap (const '\\') (string "\\\\")
-    <|> fmap (const '\"') (string "\\\"")
-    <|> fmap (const '/') (string "\\/")
-    <|> fmap (const '\b') (string "\\b")
-    <|> fmap (const '\f') (string "\\f")
-    <|> fmap (const '\n') (string "\\n")
-    <|> fmap (const '\r') (string "\\r")
-    <|> fmap (const '\t') (string "\\t")
-    <|> escapeUnicode
+    -- fmap (const '\\') (string "\\\\")
+    -- <|> fmap (const '\"') (string "\\\"")
+    -- <|> fmap (const '/') (string "\\/")
+    -- <|> fmap (const '\b') (string "\\b")
+    -- <|> fmap (const '\f') (string "\\f")
+    -- <|> fmap (const '\n') (string "\\n")
+    -- <|> fmap (const '\r') (string "\\r")
+    -- <|> fmap (const '\t') (string "\\t")
+    -- <|> 
+    escapeUnicode
 
 parseUni :: Parser String
 parseUni = do
