@@ -28,7 +28,7 @@ parseComma :: Parser Filter
 parseComma = do 
   left <- parseSimpleFilters
   _ <- symbol ","
-  Comma left <$> parseFilter
+  Comma left <$> parseWithComma
 
 parseParenthesis :: Parser Filter
 parseParenthesis = do
