@@ -39,8 +39,8 @@ parseParenthesis = do
 
 -- parseOptional :: Parser Filter
 -- parseOptional = do 
---   filter <- parseObjectIndex <|>
---     parseArrayIndex <|>
+--   filter <- parseArrayIndex <|>
+--     parseObjectIndex <|>
 
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do

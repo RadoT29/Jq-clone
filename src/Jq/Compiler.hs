@@ -37,10 +37,12 @@ compile (Iterator indices) inp = case inp of
                    | otherwise    -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
     (JObject dict) | null indices -> Right (map snd dict)
                    | otherwise    -> Left "asd"
+    JNull -> Right (map (const JNull) indices)
     _                             -> Left "Iterator only works with Arrays"
 compile (IteratorObj indices) inp = case inp of
     (JObject dict) | null indices -> Right (map snd dict)
                    | otherwise    -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
+    JNull -> Right (map (const JNull) indices)
     _                             -> Left "IteratorObj only works with Objects"
 compile RecursiveDescent inp = Right (JString <$> recursive inp)
 
