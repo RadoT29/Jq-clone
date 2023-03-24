@@ -11,7 +11,7 @@ parseWithComma :: Parser Filter
 parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
-parseSimpleFilters = parseParenthesis <|> parsePipeObjIndices <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity
+parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parsePipeObjIndices <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity 
 
 parseIdentity :: Parser Filter
 parseIdentity = do
@@ -59,9 +59,6 @@ parsePipeObjIndices = do
   left <- parseObjectIndex 
   right <- parsePipeObjIndices <|> return Identity
   return $ Pipe left right
-
--- >>> parse parseObjectIndex ".\"foo\""
--- [(foo,"")]
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = do
@@ -119,7 +116,6 @@ parseIterator = do
   l <- parseSquareBrackets (parseIteratorIndices parseStr)
   return $ IteratorObj l
 
-
 parseIteratorIndices :: Parser a -> Parser [a]
 parseIteratorIndices p = do
   x <- p
@@ -128,7 +124,10 @@ parseIteratorIndices p = do
       p)
   return (x:xs)
 
-
+parseRecursiveDescent :: Parser Filter
+parseRecursiveDescent = do
+  _ <- symbol ".."
+  return RecursiveDescent
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of

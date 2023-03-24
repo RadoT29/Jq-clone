@@ -21,13 +21,13 @@ compile (Slice l u) inp =  case inp of
     (JArray arr) | length arr < lower  -> Right []
                  | length arr < upper -> Right [JArray (take (length arr - lower) (drop lower arr))]
                  | otherwise -> Right [JArray (take (upper - lower) (drop lower arr))]
-        where 
+        where
             lower = convert l (length arr)
             upper = convert u (length arr)
     (JString s)  | length s < lower  -> Right []
                  | length s < upper -> Right [JString (take (length s - lower) (drop lower s))]
                  | otherwise -> Right [JString (take (upper - lower) (drop lower s))]
-        where 
+        where
             lower = convert l (length s)
             upper = convert u (length s)
     JNull ->Right [JNull]
@@ -40,6 +40,13 @@ compile (IteratorObj indices) inp = case inp of
     (JObject dict) | null indices -> Right (map snd dict)
                    | otherwise    -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
     _                             -> Left "IteratorObj only works with Objects"
+compile RecursiveDescent inp = Right (JString <$> recursive inp)
+
+recursive :: JSON -> [String]
+recursive inp = case inp of
+    (JObject xs) -> show inp : concatMap (recursive . snd) xs
+    (JArray xs) -> show inp : concatMap recursive xs
+    _ -> [show inp]
 
 
 convert :: Int -> Int -> Int
@@ -56,7 +63,7 @@ arrayIndex i inp = case inp of
 objectIndex :: String -> JProgram[JSON]
 objectIndex s inp = case inp of
     (JObject dict) -> let l = dropWhile (\(name, _) -> name /= s) (reverse dict)
-        in if null l then Right[JNull] else Right [snd $ head l]
+        in if null l then Right [JNull] else Right [snd $ head l]
     JNull -> Right [JNull]
     _ -> Left "An Object has to be provided"
 
