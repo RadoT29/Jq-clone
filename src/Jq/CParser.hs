@@ -40,6 +40,10 @@ parseParenthesis = do
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do
   s <- parseSquareBrackets parseStr
+  _ <- symbol "?"
+  return $ Optional $ ObjectIndex s
+  <|> do
+  s <- parseSquareBrackets parseStr
   return $ ObjectIndex s
   <|> do
   _ <- symbol "."
