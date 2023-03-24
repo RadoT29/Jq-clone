@@ -2,7 +2,7 @@ module Jq.JParser where
 
 import Parsing.Parsing
 import Jq.Json
-import Data.Char ( chr, readLitChar, isHexDigit )
+import Data.Char ( chr )
 
 parseJNull :: Parser JSON
 parseJNull = do _ <- string "null"
@@ -125,15 +125,6 @@ filledArr = do
     _ <- symbol "]"
     return (JArray (x:xs))
 
-
--- >>> parse parseJSON "[1,2,5,  6  , \"asd\",[1,2,3]]"
--- [([
---   1, 2, 5, 6, "asd", [
---   1, 2, 3
--- ]
--- ],"")]
-
-
 parseObject :: Parser JSON
 parseObject = emptyObj <|> filledObj
 
@@ -162,8 +153,3 @@ parsePair = do
 
 parseJSON :: Parser JSON
 parseJSON = token $ parseJNull <|> parseBool <|> parseNum <|> parseString <|> parseArray <|> parseObject
-
--- >>> parse parseObject "{\"foo\": 42}"
--- [({
---   "foo": 42
--- },"")]

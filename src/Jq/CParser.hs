@@ -11,7 +11,7 @@ parseWithComma :: Parser Filter
 parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
-parseSimpleFilters = parseIdentity <|> parseParenthesis <|> parseObjectIndex <|> parseArrayIndex <|> parseSlice <|> parseIterator
+parseSimpleFilters = parseParenthesis <|> parseObjectIndex <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity
 
 parseIdentity :: Parser Filter
 parseIdentity = do
