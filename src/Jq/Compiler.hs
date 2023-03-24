@@ -26,9 +26,11 @@ compile (Slice lower upper) inp = case inp of
 compile (Iterator indices) inp = case inp of
     (JArray arr)   | null indices -> Right arr
                    | otherwise    -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
+    _                             -> Left "Iterator only works with Arrays"
+compile (IteratorObj indices) inp = case inp of
     (JObject dict) | null indices -> Right (map snd dict)
-                   | otherwise    -> fmap concat  (mapM (\x -> arrayIndex x (JObject dict)) indices)
-    _                             -> Left "Iterator only works with Arrays and Objects"
+                   | otherwise    -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
+    _                             -> Left "IteratorObj only works with Objects"
 
 
 arrayIndex :: Int -> JProgram[JSON]
