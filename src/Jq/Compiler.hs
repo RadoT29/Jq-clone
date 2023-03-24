@@ -35,6 +35,8 @@ compile (Slice l u) inp =  case inp of
 compile (Iterator indices) inp = case inp of
     (JArray arr)   | null indices -> Right arr
                    | otherwise    -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
+    (JObject dict) | null indices -> Right (map snd dict)
+                   | otherwise    -> Left "asd"
     _                             -> Left "Iterator only works with Arrays"
 compile (IteratorObj indices) inp = case inp of
     (JObject dict) | null indices -> Right (map snd dict)
@@ -54,7 +56,7 @@ convert bound l = if bound >= 0 then bound else l + bound
 
 arrayIndex :: Int -> JProgram[JSON]
 arrayIndex i inp = case inp of
-    (JArray a) | length a > index -> Right [a !! index]
+    (JArray a) | length a > abs i -> Right [a !! index]
                | otherwise -> Right [JNull]
         where index = convert i (length a)
     JNull ->Right [JNull]

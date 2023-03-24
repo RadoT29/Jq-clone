@@ -129,6 +129,9 @@ parseRecursiveDescent = do
   _ <- symbol ".."
   return RecursiveDescent
 
+-- parseConstructor :: Parser Filter
+-- parseConstructor = 
+
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of
   [] -> Left "No filters provided"
