@@ -11,7 +11,7 @@ parseWithComma :: Parser Filter
 parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
-parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parsePipeObjIndices <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity 
+parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity 
 
 parseIdentity :: Parser Filter
 parseIdentity = do
@@ -36,6 +36,11 @@ parseParenthesis = do
   f <- parseFilter
   _ <- symbol ")"
   return f
+
+-- parseOptional :: Parser Filter
+-- parseOptional = do 
+--   filter <- parseObjectIndex <|>
+--     parseArrayIndex <|>
 
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do
