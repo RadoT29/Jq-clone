@@ -43,12 +43,12 @@ parseObjectIndex = do
   return $ ObjectIndex s
   <|> do
   _ <- symbol "."
-  identity <- ident
+  identity <- ident <|> parseStr
   _ <- symbol "?"
   return $ Optional $ ObjectIndex identity
   <|> do
-  _ <- symbol "."
-  ObjectIndex <$> ident
+  _ <- symbol "." 
+  ObjectIndex <$> (ident <|> parseStr)
 
 parsePipeObjIndices :: Parser Filter
 parsePipeObjIndices = do
@@ -56,8 +56,8 @@ parsePipeObjIndices = do
   right <- parsePipeObjIndices <|> return Identity
   return $ Pipe left right
 
--- >>> parse parsePipeObjIndices ".foo.bar.foo"
--- [(foo | bar | foo | .,"")]
+-- >>> parse parseObjectIndex ".\"foo\""
+-- [(foo,"")]
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = do
