@@ -44,13 +44,13 @@ compile (IteratorObj indices) inp = case inp of
                    | otherwise    -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
     JNull -> Right (map (const JNull) indices)
     _                             -> Left "IteratorObj only works with Objects"
-compile RecursiveDescent inp = Right (JString <$> recursive inp)
+compile RecursiveDescent inp = Right (recursive inp)
 
-recursive :: JSON -> [String]
+recursive :: JSON -> [JSON]
 recursive inp = case inp of
-    (JObject xs) -> show inp : concatMap (recursive . snd) xs
-    (JArray xs) -> show inp : concatMap recursive xs
-    _ -> [show inp]
+    (JObject xs) -> inp : concatMap (recursive . snd) xs
+    (JArray xs) -> inp : concatMap recursive xs
+    x -> [x]
 
 
 convert :: Int -> Int -> Int

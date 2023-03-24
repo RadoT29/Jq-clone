@@ -37,11 +37,6 @@ parseParenthesis = do
   _ <- symbol ")"
   return f
 
--- parseOptional :: Parser Filter
--- parseOptional = do 
---   filter <- parseArrayIndex <|>
---     parseObjectIndex <|>
-
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do
   s <- parseSquareBrackets parseStr
