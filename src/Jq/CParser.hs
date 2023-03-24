@@ -43,12 +43,12 @@ parseObjectIndex = do
   return $ ObjectIndex s
   <|> do
   _ <- symbol "."
-  ObjectIndex <$> ident
-  <|> do
-  _ <- symbol "."
   identity <- ident
   _ <- symbol "?"
   return $ Optional $ ObjectIndex identity
+  <|> do
+  _ <- symbol "."
+  ObjectIndex <$> ident
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = do
@@ -66,6 +66,10 @@ parseSquareBrackets p = do
 parseSlice :: Parser Filter
 parseSlice = do
   (lowerBound, upperBound) <- parseSquareBrackets parseBounds
+  _ <- symbol "?"
+  return $ Optional $ Slice lowerBound upperBound
+  <|> do
+  (lowerBound, upperBound) <- parseSquareBrackets parseBounds
   return $ Slice lowerBound upperBound
 
 parseBounds :: Parser (Int, Int)
@@ -78,25 +82,26 @@ parseBounds = do
 parseIterator :: Parser Filter
 parseIterator = do
   _ <- parseSquareBrackets (string "")
-  return $ Iterator []
-  <|> do
-  _ <- parseSquareBrackets (string "")
   _ <- symbol "?"
   return $ Optional $ Iterator []
   <|> do
-  l <- parseSquareBrackets (parseIteratorIndices int)
-  return $ Iterator l
+  _ <- parseSquareBrackets (string "")
+  return $ Iterator []
   <|> do
   l <- parseSquareBrackets (parseIteratorIndices int)
   _ <- symbol "?"
   return $ Optional $ Iterator l
   <|> do
-  l <- parseSquareBrackets (parseIteratorIndices parseStr)
-  return $ IteratorObj l
+  l <- parseSquareBrackets (parseIteratorIndices int)
+  return $ Iterator l
   <|> do
   l <- parseSquareBrackets (parseIteratorIndices parseStr)
   _ <- symbol "?"
   return $ Optional $ IteratorObj l
+  <|> do
+  l <- parseSquareBrackets (parseIteratorIndices parseStr)
+  return $ IteratorObj l
+
 
 parseIteratorIndices :: Parser a -> Parser [a]
 parseIteratorIndices p = do
