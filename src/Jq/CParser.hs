@@ -62,6 +62,10 @@ parsePipeObjIndices = do
 parseArrayIndex :: Parser Filter
 parseArrayIndex = do
   s <- parseSquareBrackets int
+  _ <- symbol "?"
+  return $ Optional $ ArrayIndex s
+  <|> do
+  s <- parseSquareBrackets int
   return $ ArrayIndex s
 
 parseSquareBrackets :: Parser a -> Parser a
