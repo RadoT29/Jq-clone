@@ -2,7 +2,7 @@ module Jq.Filters where
 
 data Filter = Identity | Parenthesis Filter | ObjectIndex String
  | ArrayIndex Int | Slice Int Int 
- | Iterator [Int] |IteratorObj [String] | Optional Filter
+ | Iterator [Int] |IteratorObj [String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent
  
 
@@ -18,6 +18,7 @@ instance Show Filter where
   show (Optional f) = show f ++ "?"
   show (Parenthesis f) = "(" ++ show f ++ ")"
   show RecursiveDescent = ".."
+  show EmptyIteration = "[]"
 
 instance Eq Filter where
   Identity == Identity = True

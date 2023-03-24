@@ -97,10 +97,10 @@ parseIterator :: Parser Filter
 parseIterator = do
   _ <- parseSquareBrackets (string "")
   _ <- symbol "?"
-  return $ Optional $ Iterator []
+  return $ Optional EmptyIteration
   <|> do
   _ <- parseSquareBrackets (string "")
-  return $ Iterator []
+  return EmptyIteration
   <|> do
   l <- parseSquareBrackets (parseIteratorIndices int)
   _ <- symbol "?"
