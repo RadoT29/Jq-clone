@@ -49,7 +49,3 @@ objectIndex s inp = case inp of
 
 run :: JProgram [JSON] -> JSON -> Either String [JSON]
 run f j = f j
-
-
--- >>> compile (Comma )
-

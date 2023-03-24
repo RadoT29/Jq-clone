@@ -13,8 +13,8 @@ instance Show Filter where
   show (Comma a b) = show a ++ ", " ++ show b
   show (ArrayIndex i) = ".[" ++ show i ++ "]"
   show (Slice l r) = ".[" ++ show l ++ show r ++ "]"
-  show (Iterator indices) = ".[]"
-  show (IteratorObj indices) = ".[]"
+  show (Iterator _) = ".[]"
+  show (IteratorObj _) = ".[]"
   show (Optional f) = show f ++ "?"
   show (Parenthesis f) = "(" ++ show f ++ ")"
 

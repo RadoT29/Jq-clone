@@ -11,7 +11,7 @@ parseWithComma :: Parser Filter
 parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
-parseSimpleFilters = parseParenthesis <|> parseObjectIndex <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity
+parseSimpleFilters = parseParenthesis <|> parsePipeObjIndices <|> parseArrayIndex <|> parseSlice <|> parseIterator <|> parseIdentity
 
 parseIdentity :: Parser Filter
 parseIdentity = do
@@ -49,6 +49,15 @@ parseObjectIndex = do
   <|> do
   _ <- symbol "."
   ObjectIndex <$> ident
+
+parsePipeObjIndices :: Parser Filter
+parsePipeObjIndices = do
+  left <- parseObjectIndex 
+  right <- parsePipeObjIndices <|> return Identity
+  return $ Pipe left right
+
+-- >>> parse parsePipeObjIndices ".foo.bar.foo"
+-- [(foo | bar | foo | .,"")]
 
 parseArrayIndex :: Parser Filter
 parseArrayIndex = do
