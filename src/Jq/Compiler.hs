@@ -35,7 +35,7 @@ compile (IteratorObj indices) inp = case inp of
 
 arrayIndex :: Int -> JProgram[JSON]
 arrayIndex index inp = case inp of
-    (JArray a) | length a > index -> if index > 0 then Right [a !! index] else Right [a !! (length a  + index)]
+    (JArray a) | length a > index -> if index >= 0 then Right [a !! index] else Right [a !! (length a  + index)]
                | otherwise -> Right [JNull]
     JNull ->Right [JNull]
     _ -> Left "An Array has to be provided"
