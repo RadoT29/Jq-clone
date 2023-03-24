@@ -17,10 +17,19 @@ compile (Optional f) inp = let output = compile f inp
         (Left _) -> return []
         right -> right
 compile (ArrayIndex index) inp = arrayIndex index inp
-compile (Slice lower upper) inp = case inp of
+compile (Slice l u) inp =  case inp of
     (JArray arr) | length arr < lower  -> Right []
-                 | length arr < upper -> Right (take (length arr - lower) (drop lower arr))
-                 | otherwise -> Right (take (upper - lower) (drop lower arr))
+                 | length arr < upper -> Right [JArray (take (length arr - lower) (drop lower arr))]
+                 | otherwise -> Right [JArray (take (upper - lower) (drop lower arr))]
+        where 
+            lower = convert l (length arr)
+            upper = convert u (length arr)
+    (JString s)  | length s < lower  -> Right []
+                 | length s < upper -> Right [JString (take (length s - lower) (drop lower s))]
+                 | otherwise -> Right [JString (take (upper - lower) (drop lower s))]
+        where 
+            lower = convert l (length s)
+            upper = convert u (length s)
     JNull ->Right [JNull]
     _ -> Left "An Array has to be provided"
 compile (Iterator indices) inp = case inp of
@@ -33,10 +42,14 @@ compile (IteratorObj indices) inp = case inp of
     _                             -> Left "IteratorObj only works with Objects"
 
 
+convert :: Int -> Int -> Int
+convert bound l = if bound >= 0 then bound else l + bound
+
 arrayIndex :: Int -> JProgram[JSON]
-arrayIndex index inp = case inp of
-    (JArray a) | length a > index -> if index >= 0 then Right [a !! index] else Right [a !! (length a  + index)]
+arrayIndex i inp = case inp of
+    (JArray a) | length a > index -> Right [a !! index]
                | otherwise -> Right [JNull]
+        where index = convert i (length a)
     JNull ->Right [JNull]
     _ -> Left "An Array has to be provided"
 
