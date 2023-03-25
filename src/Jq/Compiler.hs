@@ -46,7 +46,7 @@ recursive inp = case inp of
 applySlice :: [a] -> Int -> Int -> [a]
 applySlice xs l u =
     if lower < upper then
-        take  (min (length xs) upper) (drop (max 0 lower) xs)
+        take (min (length xs) upper) (drop (max 0 lower) xs)
     else []
 
     where
@@ -58,7 +58,7 @@ convert bound l = if bound >= 0 then bound else l + bound
 
 arrayIndex :: Int -> JProgram[JSON]
 arrayIndex i inp = case inp of
-    (JArray a) | length a > abs i -> Right [a !! index]
+    (JArray a) | length a > index && index >= 0 -> Right [a !! index]
                | otherwise -> Right [JNull]
         where index = convert i (length a)
     JNull ->Right [JNull]
@@ -66,7 +66,7 @@ arrayIndex i inp = case inp of
 
 objectIndex :: String -> JProgram[JSON]
 objectIndex s inp = case inp of
-    (JObject dict) -> let l = dropWhile (\(name, _) -> name /= s) (reverse dict)
+    (JObject dict) -> let l = dropWhile (\(name, _) -> name /= s) dict
         in if null l then Right [JNull] else Right [snd $ head l]
     JNull -> Right [JNull]
     _ -> Left "An Object has to be provided"
