@@ -15,25 +15,25 @@ compile (Comma a b) inp = compile a inp >>= (\x -> fmap (x ++)  (compile b inp))
 compile (Optional f) inp = let output = compile f inp
     in case output of
         (Left _) -> return []
-        right -> right
+        right    -> right
 compile (ArrayIndex index) inp = arrayIndex index inp
 compile (Slice l u) inp =  case inp of
     (JArray arr) -> Right [JArray $ applySlice arr l u]
-    (JString s) -> Right [JString $ applySlice s l u]
-    JNull ->Right [JNull]
-    _ -> Left "An Array/String has to be provided"
+    (JString s)  -> Right [JString $ applySlice s l u]
+    JNull        -> Right [JNull]
+    _            -> Left "An Array/String has to be provided"
 compile (Iterator indices) inp = case inp of
-    (JArray arr) -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
-    JNull -> Right (map (const JNull) indices)
-    _                             -> Left "Iterator only works with Arrays"
+    (JArray _) -> concat <$> mapM (`arrayIndex` inp) indices
+    JNull      -> Right (map (const JNull) indices)
+    _          -> Left "Iterator only works with Arrays"
 compile (IteratorObj indices) inp = case inp of
-    (JObject dict) -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
-    JNull -> Right (map (const JNull) indices)
-    _                             -> Left "IteratorObj only works with Objects"
+    (JObject _) -> concat <$> mapM (`objectIndex` inp) indices
+    JNull       -> Right (map (const JNull) indices)
+    _           -> Left "IteratorObj only works with Objects"
 compile EmptyIteration inp = case inp of
-      (JObject dict) -> Right (map snd dict)
-      (JArray arr) -> Right arr
-      _ -> Left "Itearation doesn't work with this type"
+    (JObject dict) -> Right (map snd dict)
+    (JArray arr)   -> Right arr
+    _              -> Left "Itearation doesn't work with this type"
 compile RecursiveDescent inp = Right (recursive inp)
 
 recursive :: JSON -> [JSON]
@@ -46,9 +46,9 @@ recursive inp = case inp of
 applySlice :: [a] -> Int -> Int -> [a]
 applySlice xs l u =
     if lower < upper then
-        let 
+        let
             left = max 0 lower
-            right = min (length xs) upper 
+            right = min (length xs) upper
         in take (right - left) (drop left xs)
     else []
 

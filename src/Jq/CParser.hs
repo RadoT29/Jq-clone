@@ -11,7 +11,17 @@ parseWithComma :: Parser Filter
 parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
-parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity 
+-- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
+parseSimpleFilters = parsePipeObjIndices <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
+
+parseWithDot :: Parser Filter
+parseWithDot = do
+  _ <- symbol "."
+  parseWithoutDot
+
+parseWithoutDot :: Parser Filter
+parseWithoutDot = do
+  parseArrayIndex <|> parseObjectIndexBrackets <|> parseSlice <|> parseIterator
 
 parseIdentity :: Parser Filter
 parseIdentity = do
@@ -25,7 +35,7 @@ parsePipe = do
   Pipe left <$> parseFilter
 
 parseComma :: Parser Filter
-parseComma = do 
+parseComma = do
   left <- parseSimpleFilters
   _ <- symbol ","
   Comma left <$> parseWithComma
@@ -39,25 +49,32 @@ parseParenthesis = do
 
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do
+  _ <- symbol "."
+  identity <- ident <|> parseStr
+  _ <- symbol "?"
+  return $ Optional $ ObjectIndex identity
+  <|> do
+  _ <- symbol "."
+  ObjectIndex <$> (ident <|> parseStr)
+
+parseObjectIndexBrackets :: Parser Filter
+parseObjectIndexBrackets = do
   s <- parseSquareBrackets parseStr
   _ <- symbol "?"
   return $ Optional $ ObjectIndex s
   <|> do
   s <- parseSquareBrackets parseStr
   return $ ObjectIndex s
-  <|> do
-  _ <- symbol "."
-  identity <- ident <|> parseStr
-  _ <- symbol "?"
-  return $ Optional $ ObjectIndex identity
-  <|> do
-  _ <- symbol "." 
-  ObjectIndex <$> (ident <|> parseStr)
 
 parsePipeObjIndices :: Parser Filter
 parsePipeObjIndices = do
-  left <- parseObjectIndex 
-  right <- parsePipeObjIndices <|> return Identity
+  left <- parseObjectIndex <|> parseWithDot
+  Pipe left <$> (pipeHelper <|> return Identity)
+
+pipeHelper :: Parser Filter
+pipeHelper = do
+  left <- parseObjectIndex <|> parseWithoutDot
+  right <- pipeHelper <|> return Identity
   return $ Pipe left right
 
 parseArrayIndex :: Parser Filter
@@ -71,7 +88,7 @@ parseArrayIndex = do
 
 parseSquareBrackets :: Parser a -> Parser a
 parseSquareBrackets p = do
-  _ <- symbol "."
+  -- _ <- symbol "."
   _ <- symbol "["
   s <- p
   _ <- symbol "]"
