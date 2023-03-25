@@ -1,7 +1,8 @@
 module Jq.Filters where
+import Jq.Json ( JSON )
 
 data Filter = Identity | Parenthesis Filter | ObjectIndex String
- | ArrayIndex Int | Slice Int Int 
+ | ArrayIndex Int | Slice Int Int | Jval JSON | ArrConst [Filter] | ObjConst [(String, Filter)]
  | Iterator [Either Int String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent
  
@@ -18,6 +19,9 @@ instance Show Filter where
   show (Parenthesis f) = "(" ++ show f ++ ")"
   show RecursiveDescent = ".."
   show EmptyIteration = "[]"
+  show (Jval v) = show v
+  show (ArrConst f) = show f
+  show (ObjConst f) = show f
 
 instance Eq Filter where
   Identity == Identity = True

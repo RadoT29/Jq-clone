@@ -2,7 +2,7 @@ module Jq.CParser where
 
 import Parsing.Parsing
 import Jq.Filters
-import Jq.JParser (parseStr)
+import Jq.JParser (parseStr, parseJSON)
 
 parseFilter :: Parser Filter
 parseFilter = parsePipe <|> parseWithComma
@@ -12,7 +12,7 @@ parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
 -- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
-parseSimpleFilters = parsePipeObjIndices <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
+parseSimpleFilters = parsePipeObjIndices <|> parseConstructor <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
 
 parseWithDot :: Parser Filter
 parseWithDot = do
@@ -125,13 +125,6 @@ parseIterator = do
   <|> do
   l <- parseSquareBrackets (parseIteratorIndices ((Left <$> int) <|> (Right <$> parseStr)))
   return $ Iterator l
-  -- <|> do
-  -- l <- parseSquareBrackets (parseIteratorIndices parseStr)
-  -- _ <- symbol "?"
-  -- return $ Optional $ IteratorObj l
-  -- <|> do
-  -- l <- parseSquareBrackets (parseIteratorIndices parseStr)
-  -- return $ IteratorObj l
 
 parseIteratorIndices :: Parser (Either Int String) -> Parser [Either Int String]
 parseIteratorIndices p = do
@@ -146,8 +139,43 @@ parseRecursiveDescent = do
   _ <- symbol ".."
   return RecursiveDescent
 
--- parseConstructor :: Parser Filter
--- parseConstructor = 
+parseConstructor :: Parser Filter
+parseConstructor = do 
+  Jval <$> parseJSON
+  <|> do
+    _ <- symbol "["
+    _ <- symbol "]"
+    return (ArrConst [])
+  <|> do
+    _ <- symbol "["
+    x <- parseFilter
+    xs <- many (do
+        _ <- symbol ","
+        parseFilter)
+    _ <- symbol "]"
+    return (ArrConst (x:xs))
+    <|> do
+    _ <- symbol "{"
+    _ <- symbol "}"
+    return (ObjConst [])
+    <|> do
+    _ <- symbol "{"
+    x <- parsePairFilter
+    xs <- many (do
+        _ <- symbol ","
+        parsePairFilter)
+    _ <- symbol "}"
+    return (ObjConst (x:xs))
+
+parsePairFilter :: Parser (String, Filter)
+parsePairFilter = do 
+  name <- parseStr <|> ident
+  _ <- symbol ":"
+  value <- parseFilter
+  return (name, value)
+  <|> do
+  name <- parseStr <|> ident
+  return (name, ObjectIndex name)
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of

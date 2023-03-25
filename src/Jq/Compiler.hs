@@ -4,7 +4,6 @@ import           Jq.Filters
 import           Jq.Json
 import Data.Either (lefts, rights)
 
-
 type JProgram a = JSON -> Either String a
 
 compile :: Filter -> JProgram [JSON]
@@ -33,8 +32,17 @@ compile (Iterator indices) inp = case inp of
 compile EmptyIteration inp = case inp of
     (JObject dict) -> Right (map snd dict)
     (JArray arr)   -> Right arr
-    _              -> Left "Itearation doesn't work with this type"
+    other          -> Left $ "Itearation doesn't work with: " ++ show other
 compile RecursiveDescent inp = Right (recursive inp)
+compile (Jval v) _ = return [v]
+compile (ArrConst arr) inp = concat <$>  mapM (`compile` inp) arr
+compile (ObjConst dict) inp =  case l of 
+    (Left _)       -> l
+    (Right values) -> Right [JObject (zip (map fst dict) values)]
+    where l = concat <$> mapM ((`compile` inp) . snd) dict
+
+
+
 
 recursive :: JSON -> [JSON]
 recursive inp = case inp of
