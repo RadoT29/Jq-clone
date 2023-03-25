@@ -42,6 +42,9 @@ compile (ObjConst dict) inp =  case l of
     (Left _)       -> l
     (Right values) -> Right [JObject (zip (map fst dict) values)]
     where l = concat <$> mapM ((`compile` inp) . snd) dict
+compile (Try t c) inp = case compile t inp of
+    (Left _)  -> compile c inp
+    right     -> right
 
 
 

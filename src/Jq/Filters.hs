@@ -4,7 +4,7 @@ import Jq.Json ( JSON )
 data Filter = Identity | Parenthesis Filter | ObjectIndex String
  | ArrayIndex Int | Slice Int Int | Jval JSON | ArrConst [Filter] | ObjConst [(String, Filter)]
  | Iterator [Either Int String] | EmptyIteration | Optional Filter
- | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent
+ | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent | Try Filter Filter
  
 
 instance Show Filter where
@@ -20,8 +20,10 @@ instance Show Filter where
   show RecursiveDescent = ".."
   show EmptyIteration = "[]"
   show (Jval v) = show v
-  show (ArrConst f) ="ARRCONST" ++ show f
-  show (ObjConst f) = show f
+  show (ArrConst f) = "ARRCONST" ++ show f
+  show (ObjConst f) = "OBJCONST" ++ show f
+  show (Try t c) = "Try " ++ show t ++ "Catch " ++ show c
+
 
 instance Eq Filter where
   Identity == Identity = True

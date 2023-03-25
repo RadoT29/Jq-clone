@@ -140,7 +140,7 @@ parseRecursiveDescent = do
   return RecursiveDescent
 
 parseConstructor :: Parser Filter
-parseConstructor = do 
+parseConstructor = do
   Jval <$> parseJSON
   <|> do
     _ <- symbol "["
@@ -168,7 +168,7 @@ parseConstructor = do
     return (ObjConst (x:xs))
 
 parsePairFilter :: Parser (String, Filter)
-parsePairFilter = do 
+parsePairFilter = do
   name <- parseStr <|> ident
   _ <- symbol ":"
   value <- parseFilter
@@ -176,6 +176,15 @@ parsePairFilter = do
   <|> do
   name <- parseStr <|> ident
   return (name, ObjectIndex name)
+
+parseTryCatch :: Parser Filter
+parseTryCatch = do
+  _ <- symbol "try"
+  f <- parseFilter
+  c <- symbol "catch" <|> return ""
+  if c == "" then return $ Optional f
+    else do
+      Try f <$> parseFilter
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of
