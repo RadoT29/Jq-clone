@@ -20,7 +20,7 @@ instance Show Filter where
   show RecursiveDescent = ".."
   show EmptyIteration = "[]"
   show (Jval v) = show v
-  show (ArrConst f) = show f
+  show (ArrConst f) ="ARRCONST" ++ show f
   show (ObjConst f) = show f
 
 instance Eq Filter where

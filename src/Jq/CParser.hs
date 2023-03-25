@@ -12,7 +12,7 @@ parseWithComma = parseComma <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
 -- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
-parseSimpleFilters = parsePipeObjIndices <|> parseConstructor <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
+parseSimpleFilters = parseConstructor <|> parsePipeObjIndices <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
 
 parseWithDot :: Parser Filter
 parseWithDot = do

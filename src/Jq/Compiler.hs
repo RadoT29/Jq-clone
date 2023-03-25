@@ -35,7 +35,9 @@ compile EmptyIteration inp = case inp of
     other          -> Left $ "Itearation doesn't work with: " ++ show other
 compile RecursiveDescent inp = Right (recursive inp)
 compile (Jval v) _ = return [v]
-compile (ArrConst arr) inp = concat <$>  mapM (`compile` inp) arr
+compile (ArrConst arr) inp = case concat <$>  mapM (`compile` inp) arr  of
+    (Left v) -> Left v
+    (Right array)    -> Right [JArray array]
 compile (ObjConst dict) inp =  case l of 
     (Left _)       -> l
     (Right values) -> Right [JObject (zip (map fst dict) values)]
