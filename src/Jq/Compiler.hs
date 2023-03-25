@@ -18,30 +18,16 @@ compile (Optional f) inp = let output = compile f inp
         right -> right
 compile (ArrayIndex index) inp = arrayIndex index inp
 compile (Slice l u) inp =  case inp of
-    (JArray arr) | length arr < lower  -> Right []
-                 | length arr < upper -> Right [JArray (take (length arr - lower) (drop lower arr))]
-                 | otherwise -> Right [JArray (take (upper - lower) (drop lower arr))]
-        where
-            lower = convert l (length arr)
-            upper = convert u (length arr)
-    (JString s)  | length s < lower  -> Right []
-                 | length s < upper -> Right [JString (take (length s - lower) (drop lower s))]
-                 | otherwise -> Right [JString (take (upper - lower) (drop lower s))]
-        where
-            lower = convert l (length s)
-            upper = convert u (length s)
+    (JArray arr) -> Right [JArray $ applySlice arr l u] 
+    (JString s) -> Right [JString $ applySlice s l u]
     JNull ->Right [JNull]
-    _ -> Left "An Array has to be provided"
+    _ -> Left "An Array/String has to be provided"
 compile (Iterator indices) inp = case inp of
-    (JArray arr)   | null indices -> Right arr
-                   | otherwise    -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
-    (JObject dict) | null indices -> Right (map snd dict)
-                   | otherwise    -> Left "asd"
+    (JArray arr) -> fmap concat  (mapM (\x -> arrayIndex x (JArray arr)) indices)
     JNull -> Right (map (const JNull) indices)
     _                             -> Left "Iterator only works with Arrays"
 compile (IteratorObj indices) inp = case inp of
-    (JObject dict) | null indices -> Right (map snd dict)
-                   | otherwise    -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
+    (JObject dict) -> fmap concat  (mapM (\x -> objectIndex x (JObject dict)) indices)
     JNull -> Right (map (const JNull) indices)
     _                             -> Left "IteratorObj only works with Objects"
 compile EmptyIteration inp = case inp of
@@ -56,6 +42,16 @@ recursive inp = case inp of
     (JArray xs) -> inp : concatMap recursive xs
     x -> [x]
 
+
+applySlice :: [a] -> Int -> Int -> [a]
+applySlice xs l u =
+    if lower < upper then
+        take  (min (length xs) upper) (drop (max 0 lower) xs)
+    else []
+
+    where
+        lower = convert l (length xs)
+        upper = convert u (length xs)
 
 convert :: Int -> Int -> Int
 convert bound l = if bound >= 0 then bound else l + bound
