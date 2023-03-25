@@ -18,7 +18,7 @@ compile (Optional f) inp = let output = compile f inp
         right -> right
 compile (ArrayIndex index) inp = arrayIndex index inp
 compile (Slice l u) inp =  case inp of
-    (JArray arr) -> Right [JArray $ applySlice arr l u] 
+    (JArray arr) -> Right [JArray $ applySlice arr l u]
     (JString s) -> Right [JString $ applySlice s l u]
     JNull ->Right [JNull]
     _ -> Left "An Array/String has to be provided"
@@ -46,7 +46,10 @@ recursive inp = case inp of
 applySlice :: [a] -> Int -> Int -> [a]
 applySlice xs l u =
     if lower < upper then
-        take (min (length xs) upper) (drop (max 0 lower) xs)
+        let 
+            left = max 0 lower
+            right = min (length xs) upper 
+        in take (right - left) (drop left xs)
     else []
 
     where
