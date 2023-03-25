@@ -119,21 +119,21 @@ parseIterator = do
   _ <- parseSquareBrackets (string "")
   return EmptyIteration
   <|> do
-  l <- parseSquareBrackets (parseIteratorIndices int)
+  l <- parseSquareBrackets (parseIteratorIndices ((Left <$> int) <|> (Right <$> parseStr)))
   _ <- symbol "?"
   return $ Optional $ Iterator l
   <|> do
-  l <- parseSquareBrackets (parseIteratorIndices int)
+  l <- parseSquareBrackets (parseIteratorIndices ((Left <$> int) <|> (Right <$> parseStr)))
   return $ Iterator l
-  <|> do
-  l <- parseSquareBrackets (parseIteratorIndices parseStr)
-  _ <- symbol "?"
-  return $ Optional $ IteratorObj l
-  <|> do
-  l <- parseSquareBrackets (parseIteratorIndices parseStr)
-  return $ IteratorObj l
+  -- <|> do
+  -- l <- parseSquareBrackets (parseIteratorIndices parseStr)
+  -- _ <- symbol "?"
+  -- return $ Optional $ IteratorObj l
+  -- <|> do
+  -- l <- parseSquareBrackets (parseIteratorIndices parseStr)
+  -- return $ IteratorObj l
 
-parseIteratorIndices :: Parser a -> Parser [a]
+parseIteratorIndices :: Parser (Either Int String) -> Parser [Either Int String]
 parseIteratorIndices p = do
   x <- p
   xs <- many (do

@@ -2,6 +2,7 @@ module Jq.Compiler where
 
 import           Jq.Filters
 import           Jq.Json
+import Data.Either (lefts, rights)
 
 
 type JProgram a = JSON -> Either String a
@@ -23,13 +24,12 @@ compile (Slice l u) inp =  case inp of
     JNull        -> Right [JNull]
     _            -> Left "An Array/String has to be provided"
 compile (Iterator indices) inp = case inp of
-    (JArray _) -> concat <$> mapM (`arrayIndex` inp) indices
-    JNull      -> Right (map (const JNull) indices)
-    _          -> Left "Iterator only works with Arrays"
-compile (IteratorObj indices) inp = case inp of
-    (JObject _) -> concat <$> mapM (`objectIndex` inp) indices
-    JNull       -> Right (map (const JNull) indices)
-    _           -> Left "IteratorObj only works with Objects"
+    (JArray _)  | null (rights indices) -> concat <$> mapM (`arrayIndex` inp) (lefts indices)
+                | otherwise             -> Left "Arrays can only be indexed with numbers in Iterator"
+    (JObject _) | null (lefts indices)  -> concat <$> mapM (`objectIndex` inp) (rights indices)
+                | otherwise             -> Left "Objects can only be indexed with strings in Iterator"
+    JNull                               -> Right (map (const JNull) indices)
+    _                                   -> Left "Iterator only works with Arrays and Objects"
 compile EmptyIteration inp = case inp of
     (JObject dict) -> Right (map snd dict)
     (JArray arr)   -> Right arr
@@ -39,7 +39,7 @@ compile RecursiveDescent inp = Right (recursive inp)
 recursive :: JSON -> [JSON]
 recursive inp = case inp of
     (JObject xs) -> inp : concatMap (recursive . snd) xs
-    (JArray xs) -> inp : concatMap recursive xs
+    (JArray xs)  -> inp : concatMap recursive xs
     x -> [x]
 
 
@@ -62,17 +62,17 @@ convert bound l = if bound >= 0 then bound else l + bound
 arrayIndex :: Int -> JProgram[JSON]
 arrayIndex i inp = case inp of
     (JArray a) | length a > index && index >= 0 -> Right [a !! index]
-               | otherwise -> Right [JNull]
+               | otherwise                      -> Right [JNull]
         where index = convert i (length a)
-    JNull ->Right [JNull]
-    _ -> Left "An Array has to be provided"
+    JNull                                       ->Right [JNull]
+    _                                           -> Left "An Array has to be provided"
 
 objectIndex :: String -> JProgram[JSON]
 objectIndex s inp = case inp of
     (JObject dict) -> let l = dropWhile (\(name, _) -> name /= s) dict
         in if null l then Right [JNull] else Right [snd $ head l]
-    JNull -> Right [JNull]
-    _ -> Left "An Object has to be provided"
+    JNull          -> Right [JNull]
+    _              -> Left "An Object has to be provided"
 
 run :: JProgram [JSON] -> JSON -> Either String [JSON]
 run f j = f j

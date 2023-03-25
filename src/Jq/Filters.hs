@@ -2,7 +2,7 @@ module Jq.Filters where
 
 data Filter = Identity | Parenthesis Filter | ObjectIndex String
  | ArrayIndex Int | Slice Int Int 
- | Iterator [Int] |IteratorObj [String] | EmptyIteration | Optional Filter
+ | Iterator [Either Int String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent
  
 
@@ -14,7 +14,6 @@ instance Show Filter where
   show (ArrayIndex i) = ".[" ++ show i ++ "]"
   show (Slice l r) = ".[" ++ show l ++ show r ++ "]"
   show (Iterator _) = ".[]"
-  show (IteratorObj _) = ".[]"
   show (Optional f) = show f ++ "?"
   show (Parenthesis f) = "(" ++ show f ++ ")"
   show RecursiveDescent = ".."
@@ -29,7 +28,6 @@ instance Eq Filter where
   (ArrayIndex i) == (ArrayIndex j) = i == j
   (Slice a b) == (Slice c d) = a == c && b == d 
   (Iterator xs) == (Iterator ys) = xs == ys
-  (IteratorObj xs) == (IteratorObj ys) = xs == ys
   _ == _ = False
 
 data Config = ConfigC {filters :: Filter}
