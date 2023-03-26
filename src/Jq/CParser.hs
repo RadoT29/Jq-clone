@@ -8,7 +8,7 @@ parseFilter :: Parser Filter
 parseFilter = parsePipe <|> parseWithComma
 
 parseWithComma :: Parser Filter
-parseWithComma = parseComma <|> parseSimpleFilters
+parseWithComma = parseComma <|> parseArithmetic <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
 -- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
@@ -42,6 +42,12 @@ parseComma = do
 
 parseParenthesis :: Parser Filter
 parseParenthesis = do
+  _ <- symbol "("
+  f <- parseFilter
+  _ <- symbol ")"
+  _ <- symbol "?"
+  return $ Optional f
+  <|> do
   _ <- symbol "("
   f <- parseFilter
   _ <- symbol ")"
@@ -185,6 +191,15 @@ parseTryCatch = do
   if c == "" then return $ Optional f
     else do
       Try f <$> parseFilter
+
+parseArithmetic :: Parser Filter
+parseArithmetic = do
+  f <- parseSimpleFilters
+  s <- symbol "*" <|> symbol "+" <|> symbol "-" <|> symbol "/"
+  if s == "*" then Mult f <$> parseFilter
+    else if s == "+" then Plus f <$> parseFilter
+    else if s == "-" then Minus f <$> parseFilter
+    else Div f <$> parseFilter
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of

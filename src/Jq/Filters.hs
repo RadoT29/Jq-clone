@@ -5,6 +5,7 @@ data Filter = Identity | Parenthesis Filter | ObjectIndex String
  | ArrayIndex Int | Slice Int Int | Jval JSON | ArrConst [Filter] | ObjConst [(String, Filter)]
  | Iterator [Either Int String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent | Try Filter Filter
+ | Plus Filter Filter | Minus Filter Filter | Mult Filter Filter | Div Filter Filter
  
 
 instance Show Filter where
@@ -23,6 +24,10 @@ instance Show Filter where
   show (ArrConst f) = "ARRCONST" ++ show f
   show (ObjConst f) = "OBJCONST" ++ show f
   show (Try t c) = "Try " ++ show t ++ "Catch " ++ show c
+  show (Plus a b) = show a ++ " + " ++ show b
+  show (Minus a b) = show a ++ " - " ++ show b
+  show (Mult a b) = show a ++ " * " ++ show b
+  show (Div a b) = show a ++ " / " ++ show b
 
 
 instance Eq Filter where

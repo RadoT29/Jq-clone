@@ -10,7 +10,7 @@ compile :: Filter -> JProgram [JSON]
 compile Identity inp = return [inp]
 compile (Parenthesis a) inp = compile a inp
 compile (ObjectIndex s) inp = objectIndex s inp
-compile (Pipe a b) inp = compile a inp >>= (fmap concat . mapM (compile b))
+compile (Pipe a b) inp = compile a inp >>= fmap concat . mapM (compile b)
 compile (Comma a b) inp = compile a inp >>= (\x -> fmap (x ++)  (compile b inp))
 compile (Optional f) inp = let output = compile f inp
     in case output of
@@ -38,16 +38,63 @@ compile (Jval v) _ = return [v]
 compile (ArrConst arr) inp = case concat <$>  mapM (`compile` inp) arr  of
     (Left v) -> Left v
     (Right array)    -> Right [JArray array]
-compile (ObjConst dict) inp =  case l of 
+compile (ObjConst dict) inp =  case l of
     (Left _)       -> l
     (Right values) -> Right [JObject (zip (map fst dict) values)]
     where l = concat <$> mapM ((`compile` inp) . snd) dict
 compile (Try t c) inp = case compile t inp of
     (Left _)  -> compile c inp
     right     -> right
+compile (Plus a b) inp = case (compile a inp, compile b inp) of
+    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n + m]
+    (Right [JArray n], Right [JArray m]) -> Right [JArray $ n ++ m]
+    (Right [JString n], Right [JString m]) -> Right [JString $ n ++ m]
+    (Right [JObject n], Right [JObject m]) -> Right [JObject $ n ++ m]
+    (Right x, Right [JNull]) -> Right x
+    (Right [JNull], Right x) -> Right x
+    _ -> Left "Incorrect addition"
+compile (Minus a b) inp = case (compile a inp, compile b inp) of
+    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n - m]
+    (Right [JArray n], Right [JArray m]) -> Right [JArray $ deleteItem n  m]
+    (Right x, Right [JNull]) -> Right x
+    (Right [JNull], Right x) -> Right x
+    _ -> Left "Incorrect subtraction"
+compile (Mult a b) inp = case (compile a inp, compile b inp) of
+    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n - m]
+    (Right [JString n], Right [JNumber m]) -> if m == 0 then Right [JNull] else Right [JString (concatMap (const n) [0..m])]
+    (Right [JNumber m], Right [JString n]) -> if m == 0 then Right [JNull] else Right [JString (concatMap (const n) [0..m])]
+    (Right [JObject n], Right [JObject m]) -> Right [JObject (newN ++ restM)]
+        where newN = handleObjMult n (filter (\x -> fst x `elem` map fst n) m)
+              restM = filter (\x -> fst x `notElem` map fst n) m
+    (Right x, Right [JNull]) -> Right x
+    (Right [JNull], Right x) -> Right x
+    
+    _ -> Left "Incorrect subtraction"
+compile (Div a b) inp = case (compile a inp, compile b inp) of
+    (Right [JNumber n], Right [JNumber m]) -> if m == 0 then Left "Div by 0" else Right [JNumber $ n / m]
+    (Right [JString n], Right [JString m]) -> Right [JArray $ map JString (splitOn m n 0)]
+    (Right x, Right [JNull]) -> Right x
+    (Right [JNull], Right x) -> Right x
+    _ -> Left "Incorrect subtraction"
 
 
 
+handleObjMult :: [(String, JSON)] -> [(String, JSON)] -> [(String, JSON)]
+handleObjMult [] _ = []
+handleObjMult (x:xs) ys = if fst x `elem` map fst ys then case (snd x,snd $ head $ dropWhile (\y -> fst y /= fst x) ys) of
+    (JObject n, JObject m) -> (fst x, JObject $ handleObjMult n m ++ filter (\y -> fst y `notElem` map fst n) m) : handleObjMult xs ys
+    (_, m)                     -> (fst x, m) : handleObjMult xs ys
+    else x : handleObjMult xs ys
+
+deleteItem :: [JSON] -> [JSON] -> [JSON]
+deleteItem [] _ = []
+deleteItem (x:xs) ys = if x `elem` ys then deleteItem xs ys else x : deleteItem xs ys
+
+splitOn :: String -> String -> Int -> [String]
+splitOn _ "" _ = []
+splitOn d s c | d == applySlice s c (c + length d) = applySlice s 0 c : splitOn d (applySlice s (c + length d) (length s)) 0
+              | c == length s                  = [s]
+              | otherwise                      = splitOn d s (c + 1)
 
 recursive :: JSON -> [JSON]
 recursive inp = case inp of
@@ -88,4 +135,4 @@ objectIndex s inp = case inp of
     _              -> Left "An Object has to be provided"
 
 run :: JProgram [JSON] -> JSON -> Either String [JSON]
-run f j = f j
+run f = f
