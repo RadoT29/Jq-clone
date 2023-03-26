@@ -6,6 +6,9 @@ data Filter = Identity | Parenthesis Filter | ObjectIndex String
  | Iterator [Either Int String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent | Try Filter Filter
  | Plus Filter Filter | Minus Filter Filter | Mult Filter Filter | Div Filter Filter
+ | Equiv Filter Filter | NEquiv Filter Filter | LessT Filter Filter | GrT Filter Filter
+ | GTEQ Filter Filter | LTEQ Filter Filter | And Filter Filter | Or Filter Filter | Not
+ | If Filter Filter Filter
  
 
 instance Show Filter where

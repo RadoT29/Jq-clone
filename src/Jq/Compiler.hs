@@ -61,10 +61,51 @@ compile (Div a b) inp = case (compile a inp, compile b inp) of
     (Right n, Right m) -> sequence $ divMapping <$> n <*> m
     (Left n, _) -> Left n
     (_, Left m) -> Left m
--- compile (Equiv a b) inp = case (compile a inp, compile b inp) of
---     (Left a, _) -> Left a
---     (_, Left a) -> Left a
---     (a, b)      -> Right 
+compile (Equiv a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((==) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (NEquiv a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((/=) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (LTEQ a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((<=) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (LessT a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((<) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (GrT a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((>) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (GTEQ a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((>=) <$> n <*> m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (And a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((&&) <$> map fromJsonToBool n <*> map fromJsonToBool m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (Or a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> Right $ JBool <$> ((&&) <$> map fromJsonToBool n <*> map fromJsonToBool m)
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile Not inp = Right [JBool $  not $ fromJsonToBool inp]
+compile (If c t e) inp = case compile c inp of
+    (Right n) -> concat <$> mapM (\x -> if x then th else els) cond
+        where cond = map fromJsonToBool n
+              th = compile t inp
+              els = compile e inp
+    (Left n)  -> Left n
+
+fromJsonToBool :: JSON -> Bool
+fromJsonToBool json = case json of
+    JNull -> False
+    (JBool False) -> False
+    _ -> True
 
 plusMapping :: JSON -> JSON -> Either String JSON
 plusMapping (JNumber n) (JNumber m) = Right $ JNumber $ n + m
@@ -82,15 +123,18 @@ minusMapping _ _ = Left "Incorrect subtraction"
 
 multMapping :: JSON -> JSON -> Either String JSON
 multMapping (JNumber n) (JNumber m) = Right $ JNumber $ n * m
-multMapping (JString n) (JNumber m) = if m == 0 then Right JNull else Right $ JString (concatMap (const n) [0..m])
-multMapping (JNumber m) (JString n) = if m == 0 then Right JNull else Right $ JString (concatMap (const n) [0..m])
+multMapping (JString n) (JNumber m) | m == 0 = Right JNull
+                                    | otherwise = Right $ JString (concatMap (const n) [0..m])
+multMapping (JNumber m) (JString n) | m == 0 = Right JNull
+                                    | otherwise = Right $ JString (concatMap (const n) [0..m])
 multMapping (JObject n) (JObject m) = Right $ JObject (newN ++ restM)
         where newN = handleObjMult n (filter (\x -> fst x `elem` map fst n) m)
               restM = filter (\x -> fst x `notElem` map fst n) m
 multMapping _ _ = Left "Incorrect multiplication"
 
 divMapping :: JSON -> JSON -> Either String JSON
-divMapping (JNumber n) (JNumber m) = if m == 0 then Left "Div by 0" else Right $ JNumber $ n / m
+divMapping (JNumber n) (JNumber m)  | m == 0 = Left "Div by 0"
+                                    | otherwise = Right $ JNumber $ n / m
 divMapping (JString n) (JString m) = Right $ JArray $ map JString (splitOn m n 0)
 divMapping _ _ = Left "Incorrect division"
 
@@ -103,7 +147,8 @@ handleObjMult (x:xs) ys = if fst x `elem` map fst ys then case (snd x,snd $ head
 
 deleteItem :: [JSON] -> [JSON] -> [JSON]
 deleteItem [] _ = []
-deleteItem (x:xs) ys = if x `elem` ys then deleteItem xs ys else x : deleteItem xs ys
+deleteItem (x:xs) ys | x `elem` ys  = deleteItem xs ys
+                     | otherwise    =  x : deleteItem xs ys
 
 splitOn :: String -> String -> Int -> [String]
 splitOn _ "" _ = []

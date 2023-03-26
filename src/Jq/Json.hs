@@ -21,6 +21,23 @@ instance Eq JSON where
   (JArray v) == (JArray w) = v == w
   _ == _ = False
 
+instance Ord JSON where
+  JNull <= _ = True
+  _ <= JNull = False
+  (JBool v) <= (JBool w) = v <= w
+  (JNumber v) <= (JNumber w) = v <= w
+  (JString v) <= (JString w) = v <= w
+  (JArray v) <= (JArray w) = v <= w
+  (JObject v) <= (JObject w) = v <= w
+  (JBool _) <= _ = True
+  _ <= (JBool _) = False
+  (JNumber _) <= _ = True
+  _ <= (JNumber _) = False
+  (JString _) <= _ = True
+  _ <= (JString _) = False
+  (JArray _) <= _ = True
+  _ <= (JArray _) = False
+  
 -- Smart constructors
 -- These are included for test purposes and
 -- aren't meant to correspond one to one with actual constructors you add to JSON datatype

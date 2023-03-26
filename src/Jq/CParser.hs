@@ -8,7 +8,7 @@ parseFilter :: Parser Filter
 parseFilter = parsePipe <|> parseWithComma
 
 parseWithComma :: Parser Filter
-parseWithComma = parseComma <|> parseArithmetic <|> parseSimpleFilters
+parseWithComma = parseComma <|> parseArithmetic <|> parseComparisson <|> parseIf <|> parseSimpleFilters
 
 parseSimpleFilters :: Parser Filter
 -- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
@@ -200,6 +200,39 @@ parseArithmetic = do
     else if s == "+" then Plus f <$> parseFilter
     else if s == "-" then Minus f <$> parseFilter
     else Div f <$> parseFilter
+
+parseComparisson :: Parser Filter
+parseComparisson = do
+  f <- parseSimpleFilters
+  s <- symbol "<" <|> symbol "<=" <|> symbol ">" <|> symbol ">=" 
+    <|> symbol "and" <|> symbol "or" <|> symbol "==" <|> symbol "!="
+  if s == "<" then LessT f <$> parseFilter
+  else if s == "<=" then LTEQ f <$> parseFilter
+  else if s == ">" then GrT f <$> parseFilter
+  else if s == ">=" then GTEQ f <$> parseFilter
+  else if s == "and" then And f <$> parseFilter
+  else if s == "or" then Or f <$> parseFilter
+  else if s == "==" then Equiv f <$> parseFilter
+  else NEquiv f <$> parseFilter
+  
+parseIf :: Parser Filter
+parseIf = do
+  _ <- symbol "if"
+  c <- parseFilter
+  _ <- symbol "then"
+  t <- parseFilter
+  _ <- symbol "end"
+  return $ If c t Identity
+  <|> do
+  _ <- symbol "if"
+  c <- parseFilter
+  _ <- symbol "then"
+  t <- parseFilter
+  _ <- symbol "else"
+  e <- parseFilter
+  _ <- symbol "end"
+  return $ If c t e  
+
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of
