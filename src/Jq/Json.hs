@@ -8,8 +8,8 @@ instance Show JSON where
   show (JString s) = "\"" ++s ++ "\""
   show (JNumber n) = if n == fromInteger (round n) then show (round n :: Integer) else show n
   show (JBool b) = if b then "true" else "false"
-  show (JObject p) = if null p then "{}" else "{\n  " ++ foldr (\(a,b) acc -> show (JString a) ++ ": " ++ show b ++ if acc == "" then acc else ", " ++ acc) "" p ++ "\n}"
-  show (JArray arr) = if null arr then "[]" else "[\n  " ++ foldr (\a b-> show a ++ if b=="" then b else ", " ++ b) "" arr ++ "\n]"
+  show (JObject p) = if null p then "{}" else "{\n  " ++ foldr (\(a,b) acc -> show (JString a) ++ ": " ++ show b ++ if acc == "" then acc else ",\n " ++ acc) "" p ++ "\n}"
+  show (JArray arr) = if null arr then "[]" else "[\n  " ++ foldr (\a b-> show a ++ if b=="" then b else ",\n " ++ b) "" arr ++ "\n]"
 
 
 instance Eq JSON where
