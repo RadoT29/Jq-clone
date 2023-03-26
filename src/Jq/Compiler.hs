@@ -46,38 +46,53 @@ compile (Try t c) inp = case compile t inp of
     (Left _)  -> compile c inp
     right     -> right
 compile (Plus a b) inp = case (compile a inp, compile b inp) of
-    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n + m]
-    (Right [JArray n], Right [JArray m]) -> Right [JArray $ n ++ m]
-    (Right [JString n], Right [JString m]) -> Right [JString $ n ++ m]
-    (Right [JObject n], Right [JObject m]) -> Right [JObject $ n ++ m]
-    (Right x, Right [JNull]) -> Right x
-    (Right [JNull], Right x) -> Right x
-    _ -> Left "Incorrect addition"
+    (Right n, Right m) -> sequence $ plusMapping <$> n <*> m
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
 compile (Minus a b) inp = case (compile a inp, compile b inp) of
-    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n - m]
-    (Right [JArray n], Right [JArray m]) -> Right [JArray $ deleteItem n  m]
-    (Right x, Right [JNull]) -> Right x
-    (Right [JNull], Right x) -> Right x
-    _ -> Left "Incorrect subtraction"
+    (Right n, Right m) -> sequence $ minusMapping <$> n <*> m
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
 compile (Mult a b) inp = case (compile a inp, compile b inp) of
-    (Right [JNumber n], Right [JNumber m]) -> Right [JNumber $ n - m]
-    (Right [JString n], Right [JNumber m]) -> if m == 0 then Right [JNull] else Right [JString (concatMap (const n) [0..m])]
-    (Right [JNumber m], Right [JString n]) -> if m == 0 then Right [JNull] else Right [JString (concatMap (const n) [0..m])]
-    (Right [JObject n], Right [JObject m]) -> Right [JObject (newN ++ restM)]
+    (Right n, Right m) -> sequence $ multMapping <$> n <*> m
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+compile (Div a b) inp = case (compile a inp, compile b inp) of
+    (Right n, Right m) -> sequence $ divMapping <$> n <*> m
+    (Left n, _) -> Left n
+    (_, Left m) -> Left m
+-- compile (Equiv a b) inp = case (compile a inp, compile b inp) of
+--     (Left a, _) -> Left a
+--     (_, Left a) -> Left a
+--     (a, b)      -> Right 
+
+plusMapping :: JSON -> JSON -> Either String JSON
+plusMapping (JNumber n) (JNumber m) = Right $ JNumber $ n + m
+plusMapping (JArray n)  (JArray m)  = Right $ JArray $ n ++ m
+plusMapping (JString n) (JString m) = Right $ JString $ n ++ m
+plusMapping (JObject n) (JObject m) = Right $ JObject $ n ++ m
+plusMapping x JNull = Right x
+plusMapping JNull x = Right x
+plusMapping _ _ = Left "Incorrect addition"
+
+minusMapping :: JSON -> JSON -> Either String JSON
+minusMapping (JNumber n) (JNumber m) = Right $ JNumber $ n - m
+minusMapping (JArray n) (JArray m) = Right $ JArray $ deleteItem n  m
+minusMapping _ _ = Left "Incorrect subtraction"
+
+multMapping :: JSON -> JSON -> Either String JSON
+multMapping (JNumber n) (JNumber m) = Right $ JNumber $ n * m
+multMapping (JString n) (JNumber m) = if m == 0 then Right JNull else Right $ JString (concatMap (const n) [0..m])
+multMapping (JNumber m) (JString n) = if m == 0 then Right JNull else Right $ JString (concatMap (const n) [0..m])
+multMapping (JObject n) (JObject m) = Right $ JObject (newN ++ restM)
         where newN = handleObjMult n (filter (\x -> fst x `elem` map fst n) m)
               restM = filter (\x -> fst x `notElem` map fst n) m
-    (Right x, Right [JNull]) -> Right x
-    (Right [JNull], Right x) -> Right x
-    
-    _ -> Left "Incorrect subtraction"
-compile (Div a b) inp = case (compile a inp, compile b inp) of
-    (Right [JNumber n], Right [JNumber m]) -> if m == 0 then Left "Div by 0" else Right [JNumber $ n / m]
-    (Right [JString n], Right [JString m]) -> Right [JArray $ map JString (splitOn m n 0)]
-    (Right x, Right [JNull]) -> Right x
-    (Right [JNull], Right x) -> Right x
-    _ -> Left "Incorrect subtraction"
+multMapping _ _ = Left "Incorrect multiplication"
 
-
+divMapping :: JSON -> JSON -> Either String JSON
+divMapping (JNumber n) (JNumber m) = if m == 0 then Left "Div by 0" else Right $ JNumber $ n / m
+divMapping (JString n) (JString m) = Right $ JArray $ map JString (splitOn m n 0)
+divMapping _ _ = Left "Incorrect division"
 
 handleObjMult :: [(String, JSON)] -> [(String, JSON)] -> [(String, JSON)]
 handleObjMult [] _ = []
