@@ -95,7 +95,6 @@ parseArrayIndex = do
 
 parseSquareBrackets :: Parser a -> Parser a
 parseSquareBrackets p = do
-  -- _ <- symbol "."
   _ <- symbol "["
   s <- p
   _ <- symbol "]"
@@ -156,9 +155,6 @@ parseConstructor = do
   <|> do
     _ <- symbol "["
     x <- parseFilter
-    -- xs <- many (do
-    --     _ <- symbol ","
-    --     parseFilter)
     _ <- symbol "]"
     return (ArrConst [x])
     <|> do
@@ -187,34 +183,34 @@ parsePairFilter = do
 parseTryCatch :: Parser Filter
 parseTryCatch = do
   _ <- symbol "try"
-  f <- parseFilter
+  f <- parseSimpleFilters
   c <- symbol "catch" <|> return ""
   if c == "" then return $ Optional f
     else do
-      Try f <$> parseFilter
+      Try f <$> parseSimpleFilters
 
 parseArithmetic :: Parser Filter
 parseArithmetic = do
   f <- parseSimpleFilters
   s <- symbol "*" <|> symbol "+" <|> symbol "-" <|> symbol "/"
-  if s == "*" then Mult f <$> parseFilter
-    else if s == "+" then Plus f <$> parseFilter
-    else if s == "-" then Minus f <$> parseFilter
-    else Div f <$> parseFilter
+  if s == "*" then Mult f <$> parseSimpleFilters
+    else if s == "+" then Plus f <$> parseSimpleFilters
+    else if s == "-" then Minus f <$> parseSimpleFilters
+    else Div f <$> parseSimpleFilters
 
 parseComparisson :: Parser Filter
 parseComparisson = do
   f <- parseSimpleFilters
   s <- symbol "<" <|> symbol "<=" <|> symbol ">" <|> symbol ">="
     <|> symbol "and" <|> symbol "or" <|> symbol "==" <|> symbol "!="
-  if s == "<" then LessT f <$> parseFilter
-  else if s == "<=" then LTEQ f <$> parseFilter
-  else if s == ">" then GrT f <$> parseFilter
-  else if s == ">=" then GTEQ f <$> parseFilter
-  else if s == "and" then And f <$> parseFilter
-  else if s == "or" then Or f <$> parseFilter
-  else if s == "==" then Equiv f <$> parseFilter
-  else NEquiv f <$> parseFilter
+  if s == "<" then LessT f <$> parseSimpleFilters
+  else if s == "<=" then LTEQ f <$> parseSimpleFilters
+  else if s == ">" then GrT f <$> parseSimpleFilters
+  else if s == ">=" then GTEQ f <$> parseSimpleFilters
+  else if s == "and" then And f <$> parseSimpleFilters
+  else if s == "or" then Or f <$> parseSimpleFilters
+  else if s == "==" then Equiv f <$> parseSimpleFilters
+  else NEquiv f <$> parseSimpleFilters
 
 parseIf :: Parser Filter
 parseIf = do
