@@ -38,10 +38,11 @@ compile (Jval v) _ = return [v]
 compile (ArrConst arr) inp = case concat <$>  mapM (`compile` inp) arr  of
     (Left v) -> Left v
     (Right array)    -> Right [JArray array]
-compile (ObjConst dict) inp =  case l of
-    (Left _)       -> l
-    (Right values) -> Right [JObject (zip (map fst dict) values)]
-    where l = concat <$> mapM ((`compile` inp) . snd) dict
+compile (ObjConst dict) inp = case mapM generateObjects compiled of
+    (Right objects) -> Right $ combineObj objects
+    (Left l) -> Left l
+    where
+        compiled = map (\(x,y) -> (compile x inp, compile y inp)) dict
 compile (Try t c) inp = case compile t inp of
     (Left _)  -> compile c inp
     right     -> right
@@ -93,7 +94,7 @@ compile (Or a b) inp = case (compile a inp, compile b inp) of
     (Right n, Right m) -> Right $ JBool <$> ((&&) <$> map fromJsonToBool n <*> map fromJsonToBool m)
     (Left n, _) -> Left n
     (_, Left m) -> Left m
-compile Not inp = Right [JBool $  not $ fromJsonToBool inp]
+compile Not inp = Right [JBool $ not $ fromJsonToBool inp]
 compile (If c t e) inp = case compile c inp of
     (Right n) -> concat <$> mapM (\x -> if x then th else els) cond
         where cond = map fromJsonToBool n
@@ -106,6 +107,31 @@ fromJsonToBool json = case json of
     JNull -> False
     (JBool False) -> False
     _ -> True
+
+toStrNames :: JSON -> Either String String
+toStrNames name = case name of
+    (JString n) -> Right n
+    _           -> Left "Not a proper name"
+
+combine :: JSON -> JSON -> JSON
+combine (JObject p) (JObject q) = JObject $ p++q
+combine _ _ = JNull
+
+generateObjects :: (Either String [JSON], Either String [JSON]) -> Either String [JSON]
+generateObjects (a,b) = case (a, b) of
+    (Right ns, Right vs) -> do
+        names <- mapM toStrNames ns
+        Right $ do
+            n <- names
+            v <- vs
+            return $ JObject [(n,v)]
+    (Left l, _) -> Left l
+    (_, Left l) -> Left l
+
+combineObj :: [[JSON]] -> [JSON]
+combineObj [] = []
+combineObj [a] = a
+combineObj (obj:others) = combine <$> obj <*> combineObj others
 
 plusMapping :: JSON -> JSON -> Either String JSON
 plusMapping (JNumber n) (JNumber m) = Right $ JNumber $ n + m

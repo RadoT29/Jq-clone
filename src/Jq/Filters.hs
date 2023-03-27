@@ -2,7 +2,7 @@ module Jq.Filters where
 import Jq.Json ( JSON )
 
 data Filter = Identity | Parenthesis Filter | ObjectIndex String
- | ArrayIndex Int | Slice Int Int | Jval JSON | ArrConst [Filter] | ObjConst [(String, Filter)]
+ | ArrayIndex Int | Slice Int Int | Jval JSON | ArrConst [Filter] | ObjConst [(Filter, Filter)]
  | Iterator [Either Int String] | EmptyIteration | Optional Filter
  | Pipe Filter Filter | Comma Filter Filter | RecursiveDescent | Try Filter Filter
  | Plus Filter Filter | Minus Filter Filter | Mult Filter Filter | Div Filter Filter
@@ -24,14 +24,23 @@ instance Show Filter where
   show RecursiveDescent = ".."
   show EmptyIteration = "[]"
   show (Jval v) = show v
-  show (ArrConst f) = "ARRCONST" ++ show f
-  show (ObjConst f) = "OBJCONST" ++ show f
+  show (ArrConst f) = "ARRCONST [\n" ++ show f ++ "\n]"
+  show (ObjConst f) = "OBJCONST {\n" ++ show f ++ "\n}"
   show (Try t c) = "Try " ++ show t ++ "Catch " ++ show c
   show (Plus a b) = show a ++ " + " ++ show b
   show (Minus a b) = show a ++ " - " ++ show b
   show (Mult a b) = show a ++ " * " ++ show b
   show (Div a b) = show a ++ " / " ++ show b
-
+  show (Equiv a b) = show a ++ " == " ++ show b
+  show (NEquiv a b) = show a ++ " != " ++ show b
+  show (LessT a b) = show a ++ " < " ++ show b
+  show (GrT a b) = show a ++ " > " ++ show b
+  show (GTEQ a b) = show a ++ " >= " ++ show b
+  show (LTEQ a b) = show a ++ " <= " ++ show b
+  show (And a b) = show a ++ " and " ++ show b
+  show (Or a b) = show a ++ " or " ++ show b
+  show Not = "not"
+  show (If a b c) = "if " ++ show a ++ " then " ++ show b ++ " else " ++ show c
 
 instance Eq Filter where
   Identity == Identity = True

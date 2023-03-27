@@ -8,9 +8,14 @@ instance Show JSON where
   show (JString s) = "\"" ++s ++ "\""
   show (JNumber n) = if n == fromInteger (round n) then show (round n :: Integer) else show n
   show (JBool b) = if b then "true" else "false"
-  show (JObject p) = if null p then "{}" else "{\n  " ++ foldr (\(a,b) acc -> show (JString a) ++ ": " ++ show b ++ if acc == "" then acc else ",\n  " ++ acc) "" p ++ "\n}"
-  show (JArray arr) = if null arr then "[]" else "[\n  " ++ foldr (\a b-> show a ++ if b=="" then b else ",\n  " ++ b) "" arr ++ "\n]"
+  show other = showNested other 0
 
+showNested :: JSON -> Int -> String
+showNested (JArray []) _ = "[]"
+showNested (JArray arr) n  = "[\n" ++ concatMap (const "  ") [0..n] ++ foldr (\a b-> showNested a (n+1) ++ if b=="" then b else ",\n" ++ concatMap (const "  ") [0..n] ++ b) "" arr ++ "\n" ++ concatMap (const "  ") [0..n-1] ++"]"
+showNested (JObject []) _ = "{}"
+showNested (JObject p) n = "{\n" ++  concatMap (const "  ") [0..n] ++ foldr (\(a,b) acc -> show (JString a) ++ ": " ++ showNested b (n+1) ++ if acc == "" then acc else ",\n" ++  concatMap (const "  ") [0..n] ++ acc) "" p ++ "\n" ++ concatMap (const "  ") [0..n-1] ++ "}"
+showNested x _ = show x
 
 instance Eq JSON where
   JNull == JNull = True
@@ -37,7 +42,7 @@ instance Ord JSON where
   _ <= (JString _) = False
   (JArray _) <= _ = True
   _ <= (JArray _) = False
-  
+
 -- Smart constructors
 -- These are included for test purposes and
 -- aren't meant to correspond one to one with actual constructors you add to JSON datatype

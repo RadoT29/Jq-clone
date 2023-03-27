@@ -3,6 +3,7 @@ module Jq.CParser where
 import Parsing.Parsing
 import Jq.Filters
 import Jq.JParser (parseStr, parseJSON)
+import Jq.Json
 
 parseFilter :: Parser Filter
 parseFilter = parsePipe <|> parseWithComma
@@ -155,11 +156,11 @@ parseConstructor = do
   <|> do
     _ <- symbol "["
     x <- parseFilter
-    xs <- many (do
-        _ <- symbol ","
-        parseFilter)
+    -- xs <- many (do
+    --     _ <- symbol ","
+    --     parseFilter)
     _ <- symbol "]"
-    return (ArrConst (x:xs))
+    return (ArrConst [x])
     <|> do
     _ <- symbol "{"
     _ <- symbol "}"
@@ -173,15 +174,15 @@ parseConstructor = do
     _ <- symbol "}"
     return (ObjConst (x:xs))
 
-parsePairFilter :: Parser (String, Filter)
+parsePairFilter :: Parser (Filter, Filter)
 parsePairFilter = do
-  name <- parseStr <|> ident
+  name <- (do Jval . JString <$> ident) <|> (do Jval . JString <$> parseStr) <|> parseFilter
   _ <- symbol ":"
   value <- parseFilter
   return (name, value)
   <|> do
   name <- parseStr <|> ident
-  return (name, ObjectIndex name)
+  return (Jval $ JString name, ObjectIndex name)
 
 parseTryCatch :: Parser Filter
 parseTryCatch = do
@@ -204,7 +205,7 @@ parseArithmetic = do
 parseComparisson :: Parser Filter
 parseComparisson = do
   f <- parseSimpleFilters
-  s <- symbol "<" <|> symbol "<=" <|> symbol ">" <|> symbol ">=" 
+  s <- symbol "<" <|> symbol "<=" <|> symbol ">" <|> symbol ">="
     <|> symbol "and" <|> symbol "or" <|> symbol "==" <|> symbol "!="
   if s == "<" then LessT f <$> parseFilter
   else if s == "<=" then LTEQ f <$> parseFilter
@@ -214,7 +215,7 @@ parseComparisson = do
   else if s == "or" then Or f <$> parseFilter
   else if s == "==" then Equiv f <$> parseFilter
   else NEquiv f <$> parseFilter
-  
+
 parseIf :: Parser Filter
 parseIf = do
   _ <- symbol "if"
@@ -231,7 +232,7 @@ parseIf = do
   _ <- symbol "else"
   e <- parseFilter
   _ <- symbol "end"
-  return $ If c t e  
+  return $ If c t e
 
 
 parseConfig :: [String] -> Either String Config
