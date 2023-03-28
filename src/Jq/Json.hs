@@ -39,7 +39,7 @@ instance Ord JSON where
   (JArray _) <= (JArray []) = False
   (JArray (v:_)) <= (JArray (w:_)) = v <= w
   (JObject v) <= (JObject w) = if map fst (sortBy (compare `on` fst) v) == map fst (sortBy (compare `on` fst) w) 
-    then map snd (sortBy (compare `on` fst) v) == map snd (sortBy (compare `on` fst) w) else map fst (sortBy (compare `on` fst) v) <= map fst (sortBy (compare `on` fst) w)
+    then map snd (sortBy (compare `on` fst) v) <= map snd (sortBy (compare `on` fst) w) else map fst (sortBy (compare `on` fst) v) <= map fst (sortBy (compare `on` fst) w)
   (JBool _) <= _ = True
   _ <= (JBool _) = False
   (JNumber _) <= _ = True
