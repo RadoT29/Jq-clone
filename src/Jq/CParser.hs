@@ -13,7 +13,7 @@ parseWithComma = parseComma <|> parseArithmetic <|> parseComparisson <|> parseIf
 
 parseSimpleFilters :: Parser Filter
 -- parseSimpleFilters = parseParenthesis <|> parseRecursiveDescent <|> parseArrayIndex <|> parsePipeObjIndices  <|> parseSlice <|> parseIterator <|> parseIdentity
-parseSimpleFilters = parseConstructor <|> parseTryCatch <|> parsePipeObjIndices <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
+parseSimpleFilters = parseNot <|> parseConstructor <|> parseTryCatch <|> parsePipeObjIndices <|> parseWithDot <|> parseParenthesis <|> parseRecursiveDescent <|> parseIdentity
 
 parseWithDot :: Parser Filter
 parseWithDot = do
@@ -231,6 +231,10 @@ parseIf = do
   _ <- symbol "end"
   return $ If c t e
 
+parseNot :: Parser Filter
+parseNot = do
+  _ <- symbol "not"
+  return Not
 
 parseConfig :: [String] -> Either String Config
 parseConfig s = case s of
