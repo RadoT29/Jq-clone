@@ -56,7 +56,8 @@ parseParenthesis = do
 
 parseObjectIndex :: Parser Filter
 parseObjectIndex = do
-  _ <- symbol "."
+  _ <- symbol "." 
+  -- maybe has to be just a char
   identity <- ident <|> parseStr
   _ <- symbol "?"
   return $ Optional $ ObjectIndex identity
@@ -240,3 +241,4 @@ parseConfig s = case s of
         [] -> Right . ConfigC $ v
         _ -> Left $ "Compilation error, leftover: " ++ out
       e -> Left $ "Compilation error: " ++ show e
+      

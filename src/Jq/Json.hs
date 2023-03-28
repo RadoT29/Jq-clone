@@ -1,4 +1,6 @@
 module Jq.Json where
+import Data.List (sortBy)
+import Data.Function (on)
 
 data JSON = JString { str :: String} | JNumber {num :: Double} | JBool {bool :: Bool} |
   JNull | JObject {pairs :: [(String, JSON)]} | JArray {values :: [JSON]}
@@ -22,7 +24,8 @@ instance Eq JSON where
   (JString v) == (JString w) = v == w
   (JNumber v) == (JNumber w) = v == w
   (JBool v) == (JBool w) = v == w
-  (JObject v) == (JObject w) = v == w
+  (JObject v) == (JObject w) = sortBy (compare `on` fst) v == sortBy (compare `on` fst) w 
+  -- Sort object array based on string names
   (JArray v) == (JArray w) = v == w
   _ == _ = False
 
@@ -33,7 +36,7 @@ instance Ord JSON where
   (JNumber v) <= (JNumber w) = v <= w
   (JString v) <= (JString w) = v <= w
   (JArray v) <= (JArray w) = v <= w
-  (JObject v) <= (JObject w) = v <= w
+  (JObject v) <= (JObject w) = sortBy (compare `on` fst) v <= sortBy (compare `on` fst) w
   (JBool _) <= _ = True
   _ <= (JBool _) = False
   (JNumber _) <= _ = True
