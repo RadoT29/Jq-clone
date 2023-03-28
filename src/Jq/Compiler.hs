@@ -91,7 +91,7 @@ compile (And a b) inp = case (compile a inp, compile b inp) of
     (Left n, _) -> Left n
     (_, Left m) -> Left m
 compile (Or a b) inp = case (compile a inp, compile b inp) of
-    (Right n, Right m) -> Right $ JBool <$> ((&&) <$> map fromJsonToBool n <*> map fromJsonToBool m)
+    (Right n, Right m) -> Right $ JBool <$> ((||) <$> map fromJsonToBool n <*> map fromJsonToBool m)
     (Left n, _) -> Left n
     (_, Left m) -> Left m
 compile Not inp = Right [JBool $ not $ fromJsonToBool inp]
