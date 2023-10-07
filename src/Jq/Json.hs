@@ -25,7 +25,6 @@ instance Eq JSON where
   (JNumber v) == (JNumber w) = v == w
   (JBool v) == (JBool w) = v == w
   (JObject v) == (JObject w) = sortBy (compare `on` fst) v == sortBy (compare `on` fst) w 
-  -- Sort object array based on string names
   (JArray v) == (JArray w) = v == w
   _ == _ = False
 
